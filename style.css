@@ -1,0 +1,82 @@
+body {
+    font-family: Arial, sans-serif;
+    background: #f2f5ff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+
+.game-box {
+    background: white;
+    width: 400px;
+    padding: 35px;
+    text-align: center;
+    border-radius: 15px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+}
+
+h1 {
+    color: #333;
+    margin-bottom: 25px;
+}
+
+.question {
+    font-size: 18px;
+}
+
+#scrambled-word {
+    font-size: 32px;
+    letter-spacing: 5px;
+    color: #5b4bdb;
+    margin: 25px 0;
+}
+
+input {
+    width: 80%;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 16px;
+}
+
+button {
+    margin-top: 15px;
+    padding: 12px 25px;
+    border: none;
+    border-radius: 8px;
+    background: #5b4bdb;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #4335b5;
+}
+
+#result {
+    font-size: 18px;
+    font-weight: bold;
+}
+button {
+    margin: 8px;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    background: #5b4bdb;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #4335b5;
+}
+.instructions {
+    color: #666;
+    font-size: 14px;
+    line-height: 1.5;
+    margin-bottom: 20px;
+}
