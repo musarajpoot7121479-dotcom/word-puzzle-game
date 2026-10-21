@@ -1,37 +1,198 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Word Puzzle Game</title>
-    <link rel="stylesheet" href="style.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Word Puzzle Game</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#14213d">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#14213d;--panel:#1d2f57;--ink:#0d1526;--tile:#ffd166;--tile2:#e8b93f;--ok:#06d6a0;--bad:#ef476f;--text:#f4f6fb;--mute:#9fb0d3;color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*,*::before,*::after{box-sizing:inherit}
+html{height:100%}
+body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-family:Fredoka,system-ui,sans-serif;display:flex;justify-content:center;padding:16px}
+main{width:100%;max-width:520px}
+h1{font-size:1.6rem;margin:4px 0 14px;text-align:center;font-weight:700}
+.bar{display:flex;gap:8px;justify-content:space-between;margin-bottom:14px}
+.stat{flex:1;background:var(--panel);border-radius:12px;padding:8px 6px;text-align:center}
+.stat b{display:block;font-size:1.3rem}
+.stat span{font-size:.8rem;color:var(--mute)}
+.timer{height:10px;background:var(--panel);border-radius:6px;overflow:hidden;margin-bottom:6px}
+.timer i{display:block;height:100%;width:100%;background:var(--ok);transform-origin:left;transition:transform 1s linear,background .3s}
+.timer.low i{background:var(--bad)}
+.hint{min-height:1.4em;text-align:center;color:var(--mute);margin:6px 0 16px}
+.row{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin:10px 0}
+.t{width:clamp(38px,11vw,52px);height:clamp(46px,13vw,62px);border-radius:10px;font:700 clamp(1.3rem,6vw,1.9rem) Fredoka,system-ui,sans-serif;display:grid;place-items:center;border:0}
+.slot{background:var(--ink);border:2px dashed #38507f;color:var(--text)}
+.slot.f{border:2px solid var(--tile);cursor:pointer}
+.tile{background:var(--tile);color:var(--ink);box-shadow:0 4px 0 var(--tile2);cursor:pointer}
+.tile:active{transform:translateY(3px);box-shadow:0 1px 0 var(--tile2)}
+.tile:disabled{opacity:.25;box-shadow:none;cursor:default}
+.ok .slot{border-color:var(--ok);color:var(--ok)}
+.bad .slot{border-color:var(--bad);color:var(--bad);animation:shake .35s}
+@keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.acts{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:18px}
+.b{font:500 1rem Fredoka,system-ui,sans-serif;background:var(--panel);color:var(--text);border:2px solid #38507f;border-radius:12px;padding:10px 14px;cursor:pointer}
+.b.main{background:var(--ok);color:var(--ink);border-color:var(--ok);font-weight:700}
+.b:hover{filter:brightness(1.12)}
+button:focus-visible{outline:3px solid #fff;outline-offset:2px}
+.card{background:var(--panel);border-radius:16px;padding:22px;text-align:center;margin-top:10px}
+.card p{color:var(--mute)}
+.big{font-size:3rem;font-weight:700;margin:4px 0}
+.lv{display:flex;gap:8px;justify-content:center;margin:14px 0;flex-wrap:wrap}
+.lv .b.sel{background:var(--tile);color:var(--ink);border-color:var(--tile)}
+[hidden]{display:none!important}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
 </head>
-
 <body>
+<main>
+<h1>Word Puzzle Game</h1>
 
-    <div class="game-box">
-        <h1>Word Puzzle Game</h1>
-        <p class="instructions">
-    Instructions: Unscramble the letters and type the correct word.
-    Click "Check Answer" to submit your answer.
-</p>
-        <p>Unscramble the letters and find the correct word!</p>
+<section id="menu" class="card">
+  <p>Unscramble the letters before the time runs out. Tap the tiles or type on your keyboard.</p>
+  <div class="lv" id="lv" role="group" aria-label="Difficulty">
+    <button class="b" data-l="easy">Easy</button>
+    <button class="b sel" data-l="medium">Medium</button>
+    <button class="b" data-l="hard">Hard</button>
+  </div>
+  <p id="bestMenu"></p>
+  <button class="b main" id="start">Start game</button>
+</section>
 
-        <p class="question">Unscramble the word:</p>
+<section id="game" hidden>
+  <div class="bar">
+    <div class="stat"><b id="sc">0</b><span>Score</span></div>
+    <div class="stat"><b id="st">0</b><span>Streak</span></div>
+    <div class="stat"><b id="rd">1/8</b><span>Word</span></div>
+    <div class="stat"><b id="tm">40</b><span>Seconds</span></div>
+  </div>
+  <div class="timer" id="tbar"><i id="tfill"></i></div>
+  <div class="hint" id="hint"></div>
+  <div id="ans" class="row" aria-label="Your answer"></div>
+  <div id="pool" class="row" aria-label="Letters"></div>
+  <div class="acts">
+    <button class="b" id="shuf">Shuffle</button>
+    <button class="b" id="hnt">Hint (-4)</button>
+    <button class="b" id="clr">Clear</button>
+    <button class="b main" id="chk">Check answer</button>
+    <button class="b" id="skip">Skip</button>
+  </div>
+</section>
 
-        <h2 id="scrambled-word">TEACHER</h2>
-        <p id="timer">Time: 30 seconds</p>
+<section id="end" class="card" hidden>
+  <p>Game over</p>
+  <div class="big" id="fs">0</div>
+  <p id="fmsg"></p>
+  <div class="acts">
+    <button class="b main" id="again">Play again</button>
+    <button class="b" id="home">Change level</button>
+  </div>
+</section>
+</main>
 
-        <input type="text" id="answer" placeholder="Enter your answer">
+<script>
+const WORDS={
+easy:["APPLE","HOUSE","WATER","CHAIR","TABLE","LIGHT","MUSIC","PLANT","BREAD","SMILE","CLOUD","TIGER","RIVER","STONE","BEACH"],
+medium:["TEACHER","PENCIL","WINDOW","GARDEN","FAMILY","BRIDGE","SCHOOL","FRIEND","ORANGE","MARKET","PLANET","SUMMER","DOCTOR","KITCHEN","CANDLE"],
+hard:["ELEPHANT","MOUNTAIN","COMPUTER","SANDWICH","KEYBOARD","HOSPITAL","UMBRELLA","TRIANGLE","LANGUAGE","BIRTHDAY","DINOSAUR","CHOCOLATE","ADVENTURE","NOTEBOOK"]};
+const TIME={easy:45,medium:40,hard:35},ROUNDS=8;
+const $=id=>document.getElementById(id);
+let level="medium",words=[],i=0,word="",tiles=[],slots=[],score=0,streak=0,hints=0,left=0,timer=null,locked=false;
+const bestKey="wpg-best-";
+const getBest=()=>{try{return +localStorage.getItem(bestKey+level)||0}catch(e){return 0}};
+const setBest=v=>{try{localStorage.setItem(bestKey+level,v)}catch(e){}};
+const shuffle=a=>{a=[...a];for(let k=a.length-1;k>0;k--){const j=Math.floor(Math.random()*(k+1));[a[k],a[j]]=[a[j],a[k]]}return a};
+function show(id){["menu","game","end"].forEach(s=>$(s).hidden=s!==id)}
+function menuBest(){$("bestMenu").textContent=getBest()?"Best score on "+level+": "+getBest():"No score on "+level+" yet. Set the first one!"}
+document.querySelectorAll("#lv .b").forEach(b=>b.onclick=()=>{level=b.dataset.l;document.querySelectorAll("#lv .b").forEach(x=>x.classList.toggle("sel",x===b));menuBest()});
 
-        <button onclick="checkAnswer()">Check Answer</button>
-        <button onclick="nextWord()">Next Word</button>
-        <button onclick="restartGame()">Restart Game</button>
-
-        <p id="result"></p>
-
-        <p>Score: <span id="score">0</span></p>
-    </div>
-
-    <script src="script.js"></script>
-
+function startGame(){words=shuffle(WORDS[level]).slice(0,ROUNDS);i=0;score=0;streak=0;show("game");load()}
+function load(){
+  word=words[i];hints=0;locked=false;slots=[];
+  let s;do{s=shuffle(word.split(""))}while(s.join("")===word);
+  tiles=s.map(ch=>({ch,used:false}));
+  $("sc").textContent=score;$("st").textContent=streak;$("rd").textContent=(i+1)+"/"+ROUNDS;
+  $("hint").textContent="A "+word.length+"-letter word";
+  $("ans").className="row";
+  left=TIME[level];clearInterval(timer);tick(true);timer=setInterval(tick,1000);
+  render();
+}
+function tick(first){
+  if(first!==true)left--;
+  $("tm").textContent=left;
+  const f=$("tfill");f.style.transform="scaleX("+Math.max(left,0)/TIME[level]+")";
+  $("tbar").classList.toggle("low",left<=10);
+  if(left<=0){clearInterval(timer);finish(false,true)}
+}
+function render(){
+  const a=$("ans");a.innerHTML="";
+  for(let k=0;k<word.length;k++){
+    const b=document.createElement("button");b.className="t slot"+(slots[k]!==undefined?" f":"");
+    b.textContent=slots[k]!==undefined?tiles[slots[k]].ch:"";
+    b.setAttribute("aria-label","Answer letter "+(k+1));
+    b.onclick=()=>{if(locked||slots[k]===undefined)return;tiles[slots[k]].used=false;slots.splice(k,1);render()};
+    a.appendChild(b);
+  }
+  const p=$("pool");p.innerHTML="";
+  tiles.forEach((t,k)=>{const b=document.createElement("button");b.className="t tile";b.textContent=t.ch;b.disabled=t.used;b.onclick=()=>place(k);p.appendChild(b)});
+}
+function place(k){
+  if(locked||tiles[k].used||slots.length>=word.length)return;
+  tiles[k].used=true;slots.push(k);render();
+  if(slots.length===word.length)check();
+}
+function current(){return slots.map(k=>tiles[k].ch).join("")}
+function check(){
+  if(locked)return;
+  if(slots.length<word.length){flash("Fill every letter first.");return}
+  if(current()===word){clearInterval(timer);finish(true)}
+  else{$("ans").className="row bad";$("hint").textContent="Not quite. Tap a letter to remove it, or press Clear.";setTimeout(()=>$("ans").className="row",400)}
+}
+function finish(win,timeout){
+  locked=true;
+  if(win){
+    streak++;const pts=Math.max(5,10+left+Math.min(streak,5)*5-hints*4);score+=pts;
+    $("ans").className="row ok";$("hint").textContent="Correct! +"+pts+" points";
+  }else{
+    streak=0;slots=[];word.split("").forEach(ch=>{const k=tiles.findIndex(t=>t.ch===ch&&!slots.includes(tiles.indexOf(t)));slots.push(k)});
+    tiles.forEach(t=>t.used=true);render();
+    $("hint").textContent=timeout?"Time’s up! The word was "+word+".":"Skipped. The word was "+word+".";
+  }
+  $("sc").textContent=score;$("st").textContent=streak;
+  setTimeout(()=>{i++;i>=ROUNDS?end():load()},win?1200:1900);
+}
+function end(){
+  clearInterval(timer);show("end");$("fs").textContent=score;
+  const b=getBest();
+  if(score>b){setBest(score);$("fmsg").textContent="New best score on "+level+"!"}
+  else $("fmsg").textContent="Best on "+level+": "+b;
+}
+function flash(m){$("hint").textContent=m}
+$("start").onclick=startGame;
+$("again").onclick=startGame;
+$("home").onclick=()=>{menuBest();show("menu")};
+$("chk").onclick=check;
+$("clr").onclick=()=>{if(locked)return;tiles.forEach(t=>t.used=false);slots=[];render()};
+$("shuf").onclick=()=>{if(locked)return;const used=slots.map(k=>tiles[k].ch);tiles=shuffle(tiles.map(t=>t.ch)).map(ch=>({ch,used:false}));slots=[];used.forEach(ch=>{const k=tiles.findIndex(t=>t.ch===ch&&!t.used);if(k>-1){tiles[k].used=true;slots.push(k)}});render()};
+$("hnt").onclick=()=>{
+  if(locked)return;
+  tiles.forEach(t=>t.used=false);slots=[];
+  const n=Math.min(Math.max(hints+1,1),word.length-1);hints++;
+  word.slice(0,n).split("").forEach(ch=>{const k=tiles.findIndex(t=>t.ch===ch&&!t.used);tiles[k].used=true;slots.push(k)});
+  render();$("hint").textContent="Starts with "+word.slice(0,n)+" (-4 points)";
+};
+$("skip").onclick=()=>{if(locked)return;clearInterval(timer);finish(false,false)};
+document.addEventListener("keydown",e=>{
+  if($("game").hidden||locked||e.ctrlKey||e.metaKey)return;
+  if(e.key==="Backspace"){if(slots.length){tiles[slots.pop()].used=false;render()}return}
+  if(e.key==="Enter"){check();return}
+  if(/^[a-zA-Z]$/.test(e.key)){const k=tiles.findIndex(t=>!t.used&&t.ch===e.key.toUpperCase());if(k>-1)place(k)}
+});
+menuBest();
+if("serviceWorker" in navigator){navigator.serviceWorker.register("sw.js").catch(()=>{})}
+</script>
 </body>
 </html>
